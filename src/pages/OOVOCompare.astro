@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import { getOOVOProviders } from '../api/oovo-providers';
+import OOVOTable from '../components/OOVOTable';
+
+// Fetch providers data at build time
+const providers = await getOOVOProviders();
+
+// Find the most economical option
+const mostEconomicalOption = providers.reduce((best, current) => {
+  const bestOption = best.volumeOptions.reduce((a, b) => 
+    (a.price / a.volume + best.shipping) < (b.price / b.volume + best.shipping) ? a : b
+  );
+  
+  const currentOption = current.volumeOptions.reduce((a, b) => 
+    (a.price / a.volume + current.shipping) < (b.price / b.volume + current.shipping) ? a : b
+  );
+
+  return (bestOption.price / bestOption.volume + best.shipping) < 
+         (currentOption.price / currentOption.volume + current.shipping) 
+    ? best 
+    : current;
+}, providers[0]);
+
+// Get the most economical volume option for the most economical provider
+const mostEconomicalVolumeOption = mostEconomicalOption.volumeOptions.reduce((a, b) => 
+  (a.price / a.volume) < (b.price / b.volume) ? a : b
+);
+---
+
+<Layout title="Compare Australian Extra Virgin Olive Oils">
+  <main class="min-h-screen">
+    <Navigation />
+    
+    <div class="container mx-auto px-4 py-24 max-w-4xl">
+      <h1 class="text-4xl font-bold mb-8 text-center">Australian Extra Virgin Olive Oil Comparison</h1>
+      
+      <section class="bg-green-50 border-l-4 border-green-500 p-6 mb-8 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4 text-green-800">Championing Local Producers</h2>
+        <p class="text-green-700 mb-4">
+          At CompHare, we believe in supporting independent Australian olive oil producers who pour their heart and soul into crafting exceptional extra virgin olive oils.
+        </p>
+        <div class="bg-white p-4 rounded-lg shadow-md">
+          <h3 class="text-xl font-bold mb-2 text-green-900">Most Economical Local Option</h3>
+          <div class="flex items-center">
+            <div class="flex-grow">
+              <p class="font-semibold text-green-800">{mostEconomicalOption.name}</p>
+              <p class="text-green-600">
+                Total Cost: ${(mostEconomicalVolumeOption.price + mostEconomicalOption.shipping).toFixed(2)}
+                <span class="text-sm">(Price: ${mostEconomicalVolumeOption.price.toFixed(2)} + Shipping: ${mostEconomicalOption.shipping.toFixed(2)})</span>
+              </p>
+              <p class="text-sm text-green-500">Location: {mostEconomicalOption.location}</p>
+              <p class="text-sm text-green-500">Volume: {mostEconomicalVolumeOption.volume}L</p>
+              <p class="text-sm text-green-500">Price per Liter: ${(mostEconomicalVolumeOption.price / mostEconomicalVolumeOption.volume).toFixed(2)}/L</p>
+            </div>
+            <a 
+              href={mostEconomicalOption.link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors"
+            >
+              Buy Direct
+            </a>
+          </div>
+        </div>
+      </section>
+      
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <OOVOTable client:load providers={providers} />
+      </div>
+
+      <section class="bg-gray-50 p-6 rounded-lg">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Why Local Matters</h2>
+        <ul class="list-disc pl-5 space-y-2 text-gray-700">
+          <li>Supporting local producers helps sustain regional economies</li>
+          <li>Shorter supply chains mean fresher, higher-quality olive oil</li>
+          <li>Direct purchasing ensures more of your money goes to the producers</li>
+          <li>Each bottle represents the passion and craftsmanship of Australian farmers</li>
+        </ul>
+      </section>
+
+      <div class="mt-8 text-sm text-gray-600">
+        <p class="mb-2"><strong>Note:</strong> Comparison includes:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Product Name</li>
+          <li>Location of Origin</li>
+          <li>Price per Liter</li>
+          <li>Shipping Cost</li>
+          <li>Total Cost</li>
+          <li>Stock Status</li>
+          <li>Direct Purchase Link</li>
+        </ul>
+      </div>
+    </div>
+
+    <Footer />
+  </main>
+</Layout>

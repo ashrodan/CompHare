@@ -35,32 +35,35 @@ import Footer from '../components/Footer.astro';
 			<div class="absolute inset-0 bg-gradient-to-b from-neutral-lighter/50 to-white/30 pointer-events-none"></div>
 			<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
 				<div class="text-center mb-16">
-					<h2 class="text-4xl sm:text-5xl font-bold text-neutral mb-4">Why Choose CompHare?</h2>
-					<p class="text-lg text-neutral-light max-w-2xl mx-auto">Fast, accurate, and easy-to-use comparison tools</p>
+					<h2 class="text-4xl sm:text-5xl font-bold text-neutral mb-4">Our Comparisons</h2>
+					<p class="text-lg text-neutral-light max-w-2xl mx-auto">Explore our range of smart comparison tools</p>
 				</div>
 				<div class="grid md:grid-cols-3 gap-8 sm:gap-12">
 					{[
 						{
-							title: "Lightning Fast",
-							description: "Get instant comparisons with our speedy algorithms",
-							icon: "⚡"
+							title: "Gas Rates",
+							description: "Compare gas prices across providers",
+							icon: "🔥",
+							href: "/GasCompare"
 						},
 						{
-							title: "Smart Analysis",
-							description: "AI-powered insights to help you make the best choice",
-							icon: "🧠"
+							title: "Olive Oils",
+							description: "Compare Australian Extra Virgin Olive Oils",
+							icon: "🫒",
+							href: "/OOVOCompare"
 						},
 						{
-							title: "Easy to Use",
-							description: "Simple interface designed for effortless comparison",
-							icon: "🎯"
+							title: "Coming Soon",
+							description: "More comparisons on the horizon",
+							icon: "🚀",
+							href: "#"
 						}
 					].map(feature => (
-						<div class="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg hover:shadow-neon transition-all duration-300 hover:-translate-y-2">
+						<a href={feature.href} class="block bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg hover:shadow-neon transition-all duration-300 hover:-translate-y-2">
 							<div class="text-5xl mb-6 animate-float">{feature.icon}</div>
 							<h3 class="text-2xl font-semibold mb-4 text-neutral">{feature.title}</h3>
 							<p class="text-neutral-light text-lg">{feature.description}</p>
-						</div>
+						</a>
 					))}
 				</div>
 			</div>
