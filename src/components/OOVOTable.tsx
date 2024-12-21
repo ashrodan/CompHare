@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { OOVOItem, OOVOVolumeOption } from '../types/oovo';
+import { OliveOilVolumeIcons, getVolumeIconByVolume } from './OliveOilVolumeIcons';
 
 interface OOVOTableProps {
   providers: OOVOItem[];
@@ -10,8 +11,7 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
   
   const [filters, setFilters] = useState({
     location: '',
-    volumeMin: availableVolumes[0],
-    volumeMax: availableVolumes[availableVolumes.length - 1],
+    excludedVolumes: new Set<number>(),
     stockStatus: '',
   });
 
@@ -20,10 +20,10 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
   const processedData = useMemo(() => {
     // Group providers and filter their volume options
     const groupedProviders = providers.map(provider => {
-      const filteredVolumeOptions = provider.volumeOptions.filter(option => 
-        option.volume >= filters.volumeMin && 
-        option.volume <= filters.volumeMax
-      );
+      const filteredVolumeOptions = provider.volumeOptions.filter(option => {
+        const icon = getVolumeIconByVolume(option.volume);
+        return !filters.excludedVolumes.has(icon.maxVolume);
+      });
 
       // Check if the provider meets other filter criteria
       const meetsLocationFilter = !filters.location || provider.location === filters.location;
@@ -58,13 +58,28 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
     setExpandedProducer(expandedProducer === producerName ? null : producerName);
   };
 
+  const handleVolumeFilterChange = (volume: number) => {
+    setFilters(prev => {
+      const newExcludedVolumes = new Set(prev.excludedVolumes);
+      if (newExcludedVolumes.has(volume)) {
+        newExcludedVolumes.delete(volume);
+      } else {
+        newExcludedVolumes.add(volume);
+      }
+      return {
+        ...prev,
+        excludedVolumes: newExcludedVolumes
+      };
+    });
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex space-x-4 mb-4">
+      <div className="flex items-center gap-4 mb-4 bg-white p-4 rounded-lg shadow-sm">
         <select 
           value={filters.location} 
           onChange={(e) => setFilters(prev => ({...prev, location: e.target.value}))}
-          className="border p-2 rounded"
+          className="border p-2 rounded h-[42px]"
         >
           <option value="">All Locations</option>
           {locations.map(loc => (
@@ -72,45 +87,28 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
           ))}
         </select>
 
-        <select 
-          value={filters.stockStatus} 
-          onChange={(e) => setFilters(prev => ({...prev, stockStatus: e.target.value}))}
-          className="border p-2 rounded"
-        >
-          <option value="">All Stock Statuses</option>
-          {stockStatuses.map(status => (
-            <option key={status} value={status}>{status}</option>
-          ))}
-        </select>
-
-        <div className="flex items-center space-x-2">
-          <label>Volume Range:</label>
-          <select
-            value={filters.volumeMin}
-            onChange={(e) => setFilters(prev => ({
-              ...prev, 
-              volumeMin: Number(e.target.value),
-              volumeMax: Math.max(Number(e.target.value), prev.volumeMax)
-            }))}
-            className="border p-2 rounded"
-          >
-            {availableVolumes.map(volume => (
-              <option key={volume} value={volume}>{volume}L Min</option>
+        <div className="flex items-center gap-4">
+          <span className="text-gray-700 whitespace-nowrap font-medium">Volume Range:</span>
+          <div className="flex items-center gap-2">
+            {OliveOilVolumeIcons.map((volumeIcon) => (
+              <button
+                key={volumeIcon.id}
+                onClick={() => handleVolumeFilterChange(volumeIcon.maxVolume)}
+                className={`
+                  flex flex-col items-center p-2 rounded-lg transition-all duration-200 min-w-[60px]
+                  ${!filters.excludedVolumes.has(volumeIcon.maxVolume)
+                    ? 'bg-green-50 border border-green-200'
+                    : 'bg-gray-50 border border-gray-200 opacity-50'
+                  }
+                  hover:bg-green-100
+                `}
+                title={`Toggle ${volumeIcon.label} volumes`}
+              >
+                {volumeIcon.icon}
+                <span className="text-xs mt-1 font-medium">{volumeIcon.label}</span>
+              </button>
             ))}
-          </select>
-          <select
-            value={filters.volumeMax}
-            onChange={(e) => setFilters(prev => ({
-              ...prev, 
-              volumeMax: Number(e.target.value),
-              volumeMin: Math.min(Number(e.target.value), prev.volumeMin)
-            }))}
-            className="border p-2 rounded"
-          >
-            {availableVolumes.map(volume => (
-              <option key={volume} value={volume}>{volume}L Max</option>
-            ))}
-          </select>
+          </div>
         </div>
       </div>
 
@@ -119,24 +117,27 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
           <tr>
             <th className="p-3 text-left">Name</th>
             <th className="p-3 text-left">Location</th>
-            <th className="p-3 text-left">Best $/L</th>
+            <th className="p-3 text-left">$/L</th>
             <th className="p-3 text-left">Shipping</th>
-            <th className="p-3 text-left">Stock</th>
-            <th className="p-3 text-left">Options</th>
             <th className="p-3 text-left">Link</th>
           </tr>
         </thead>
         <tbody>
           {processedData.map((provider, index) => (
-            <>
+            <React.Fragment key={provider.name}>
               <tr 
-                key={provider.name} 
                 onClick={() => toggleProducerExpand(provider.name)}
                 className={`border-b hover:bg-gray-50 cursor-pointer ${
                   index === 0 ? 'bg-green-50 font-semibold' : ''
                 } ${expandedProducer === provider.name ? 'bg-blue-50' : ''}`}
               >
-                <td className="p-3">{provider.name}</td>
+                <td className="p-3">
+                  {provider.name}
+                  <br />
+                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                    {provider.filteredVolumeCount} Option{provider.filteredVolumeCount !== 1 ? 's' : ''}
+                  </span>
+                </td>
                 <td className="p-3">{provider.location}</td>
                 <td className="p-3">
                   {(() => {
@@ -145,19 +146,14 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
                     );
                     return `$${(bestOption.price / bestOption.volume).toFixed(2)}/L`;
                   })()}
+                  <br />
                   {index === 0 && (
                     <span className="ml-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                      Most Economical
+                      Best
                     </span>
                   )}
                 </td>
                 <td className="p-3">${provider.shipping.toFixed(2)}</td>
-                <td className="p-3">{provider.stockStatus}</td>
-                <td className="p-3">
-                  <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                    {provider.filteredVolumeCount} Option{provider.filteredVolumeCount !== 1 ? 's' : ''}
-                  </span>
-                </td>
                 <td className="p-3">
                   <a 
                     href={provider.link} 
@@ -188,7 +184,10 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
                             key={optionIndex} 
                             className="border-b bg-gray-50 hover:bg-gray-100"
                           >
-                            <td className="p-2">{option.volume}L</td>
+                            <td className="p-2 flex items-center">
+                              {getVolumeIconByVolume(option.volume).icon}
+                              <span className="ml-2">{option.volume}L</span>
+                            </td>
                             <td className="p-2">${option.price.toFixed(2)}</td>
                             <td className="p-2">${(option.price / option.volume).toFixed(2)}/L</td>
                             <td className="p-2">${(option.price + provider.shipping).toFixed(2)}</td>
@@ -199,7 +198,7 @@ export default function OOVOTable({ providers }: OOVOTableProps) {
                   </td>
                 </tr>
               )}
-            </>
+            </React.Fragment>
           ))}
         </tbody>
       </table>
