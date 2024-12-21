@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navigation from '../components/Navigation.astro';
+import Footer from '../components/Footer.astro';
+import { getProviders } from '../api/providers';
+import GasCalculator from '../components/GasCalculator.astro';
+
+// Fetch providers data at build time
+const providers = await getProviders();
+---
+
+<Layout title="Compare Gas Rates - Victoria">
+  <main class="min-h-screen">
+    <Navigation />
+    
+    <div class="container mx-auto px-4 py-24 max-w-4xl">
+      <h1 class="text-4xl font-bold mb-8 text-center">Victoria Gas Rates Comparison</h1>
+      
+      <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <GasCalculator providers={providers} />
+      </div>
+
+      <div class="mt-8 text-sm text-gray-600">
+        <p class="mb-2"><strong>Note:</strong> Rates are calculated based on the following step thresholds:</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Step 1: First 100 MJ per day</li>
+          <li>Step 2: Next 100 MJ per day</li>
+          <li>Step 3: Next 100 MJ per day</li>
+          <li>Step 4: Next 100 MJ per day</li>
+          <li>Step 5: Remaining usage</li>
+        </ul>
+      </div>
+    </div>
+
+    <Footer />
+  </main>
+</Layout>
