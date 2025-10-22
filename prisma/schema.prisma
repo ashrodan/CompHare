@@ -1,0 +1,76 @@
+// Prisma schema for CompHare
+// Neon PostgreSQL database configuration
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Gas Provider Models
+model GasProvider {
+  id              String    @id @default(cuid())
+  name            String    @unique
+  summerRates     RateSet   @relation("SummerRates")
+  nonSummerRates  RateSet   @relation("NonSummerRates")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("gas_providers")
+}
+
+model RateSet {
+  id                    String       @id @default(cuid())
+  season                String       // "summer" or "nonSummer"
+  dailyCharge           Float
+  step1Rate             Float        // 0-100 MJ
+  step2Rate             Float        // 100-200 MJ
+  step3Rate             Float        // 200-300 MJ
+  step4Rate             Float        // 300-400 MJ
+  step5Rate             Float        // 400+ MJ
+
+  // Relations
+  summerProvider        GasProvider? @relation("SummerRates", fields: [summerProviderId], references: [id])
+  summerProviderId      String?      @unique
+  nonSummerProvider     GasProvider? @relation("NonSummerRates", fields: [nonSummerProviderId], references: [id])
+  nonSummerProviderId   String?      @unique
+
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  @@map("rate_sets")
+}
+
+// Olive Oil Provider Models
+model OOVOProvider {
+  id            String              @id @default(cuid())
+  name          String              @unique
+  location      String
+  shipping      Float
+  stockStatus   String              @default("In Stock")
+  link          String
+  description   String              @db.Text
+  volumeOptions OOVOVolumeOption[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@map("oovo_providers")
+}
+
+model OOVOVolumeOption {
+  id          String        @id @default(cuid())
+  volume      Float         // in liters
+  price       Float         // in AUD
+  provider    OOVOProvider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  providerId  String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("oovo_volume_options")
+}
+
+// Future: Additional comparison types can be added here
+// Example: Internet Plans, Electricity, Mobile Plans, etc.
