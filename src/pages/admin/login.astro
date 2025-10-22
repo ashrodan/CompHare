@@ -1,0 +1,119 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { verifyCredentials, createSession, isAuthenticated } from '../../utils/auth';
+
+// Check if already authenticated
+if (isAuthenticated(Astro.cookies)) {
+  return Astro.redirect('/admin');
+}
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const formData = await Astro.request.formData();
+    const username = formData.get('username')?.toString() || '';
+    const password = formData.get('password')?.toString() || '';
+
+    if (verifyCredentials(username, password)) {
+      createSession(Astro.cookies);
+      return Astro.redirect('/admin');
+    } else {
+      error = 'Invalid username or password';
+    }
+  } catch (e) {
+    error = 'An error occurred. Please try again.';
+    console.error('Login error:', e);
+  }
+}
+---
+
+<Layout title="Admin Login - CompHare">
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-dark via-neutral-darker to-black px-4">
+    <div class="max-w-md w-full">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold">
+          <span class="text-primary glow-text">Comp</span><span class="text-accent glow-text">Hare</span>
+        </h1>
+        <p class="text-neutral-light mt-2">Admin Dashboard</p>
+      </div>
+
+      <!-- Login Card -->
+      <div class="bg-neutral-dark border border-primary/20 rounded-lg p-8 shadow-neon">
+        <h2 class="text-2xl font-bold text-white mb-6">Sign In</h2>
+
+        {error && (
+          <div class="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        <form method="POST">
+          <!-- Username -->
+          <div class="mb-4">
+            <label for="username" class="block text-neutral-light mb-2 text-sm font-medium">
+              Username
+            </label>
+            <input
+              type="text"
+              id="username"
+              name="username"
+              required
+              autocomplete="username"
+              class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              placeholder="Enter username"
+            />
+          </div>
+
+          <!-- Password -->
+          <div class="mb-6">
+            <label for="password" class="block text-neutral-light mb-2 text-sm font-medium">
+              Password
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              autocomplete="current-password"
+              class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+              placeholder="Enter password"
+            />
+          </div>
+
+          <!-- Submit Button -->
+          <button
+            type="submit"
+            class="w-full bg-primary hover:bg-accent text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 shadow-neon hover:shadow-neon-hover"
+          >
+            Sign In
+          </button>
+        </form>
+
+        <!-- Back to Home -->
+        <div class="mt-6 text-center">
+          <a href="/" class="text-primary hover:text-accent text-sm transition-colors">
+            ← Back to Home
+          </a>
+        </div>
+      </div>
+
+      <!-- Default Credentials Note (only show in development) -->
+      {import.meta.env.DEV && (
+        <div class="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/50 rounded-lg text-yellow-200 text-sm">
+          <strong>Development Mode:</strong> Default credentials are username: <code>admin</code>, password: <code>comphare2024</code>
+        </div>
+      )}
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+  }
+  .shadow-neon-hover {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.4);
+  }
+</style>

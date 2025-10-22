@@ -1,0 +1,192 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAuth } from '../../../utils/auth';
+import { prisma } from '../../../lib/db';
+
+// Require authentication
+const authRedirect = requireAuth(Astro.cookies);
+if (authRedirect) return authRedirect;
+
+// Fetch all gas providers
+const providers = await prisma.gasProvider.findMany({
+  include: {
+    summerRates: true,
+    nonSummerRates: true,
+  },
+  orderBy: {
+    name: 'asc'
+  }
+});
+---
+
+<AdminLayout title="Gas Providers">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">Gas Providers</h1>
+      <p class="text-neutral-light">Manage gas rate comparisons</p>
+    </div>
+    <a
+      href="/admin/gas-providers/new"
+      class="bg-primary hover:bg-accent text-white font-bold py-2 px-6 rounded-lg transition-all duration-300 shadow-neon hover:shadow-neon-hover inline-flex items-center gap-2"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      Add Provider
+    </a>
+  </div>
+
+  <!-- Providers List -->
+  {providers.length === 0 ? (
+    <div class="bg-neutral-dark border border-primary/20 rounded-lg p-12 text-center shadow-neon">
+      <svg class="w-16 h-16 text-neutral-light mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+      </svg>
+      <h3 class="text-xl font-semibold text-white mb-2">No Providers Yet</h3>
+      <p class="text-neutral-light mb-6">Get started by adding your first gas provider</p>
+      <a
+        href="/admin/gas-providers/new"
+        class="inline-block bg-primary hover:bg-accent text-white font-bold py-2 px-6 rounded-lg transition-all"
+      >
+        Add Your First Provider
+      </a>
+    </div>
+  ) : (
+    <div class="space-y-4">
+      {providers.map((provider) => (
+        <div class="bg-neutral-dark border border-primary/20 rounded-lg p-6 shadow-neon hover:border-primary transition-all">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-xl font-bold text-white mb-4">{provider.name}</h3>
+
+              <!-- Summer Rates -->
+              <div class="mb-4">
+                <h4 class="text-sm font-semibold text-accent mb-2">{provider.summerRates.season}</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">Daily Charge:</span>
+                    <span class="text-white font-semibold ml-2">${(provider.summerRates.dailyCharge / 100).toFixed(2)}</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">0-100 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.summerRates.step1Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">100-200 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.summerRates.step2Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">200-300 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.summerRates.step3Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">300-400 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.summerRates.step4Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">400+ MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.summerRates.step5Rate}¢</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Non-Summer Rates -->
+              <div>
+                <h4 class="text-sm font-semibold text-accent mb-2">{provider.nonSummerRates.season}</h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">Daily Charge:</span>
+                    <span class="text-white font-semibold ml-2">${(provider.nonSummerRates.dailyCharge / 100).toFixed(2)}</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">0-100 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.nonSummerRates.step1Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">100-200 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.nonSummerRates.step2Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">200-300 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.nonSummerRates.step3Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">300-400 MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.nonSummerRates.step4Rate}¢</span>
+                  </div>
+                  <div class="bg-neutral-darker p-2 rounded">
+                    <span class="text-neutral-light">400+ MJ:</span>
+                    <span class="text-white font-semibold ml-2">{provider.nonSummerRates.step5Rate}¢</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 ml-4">
+              <a
+                href={`/admin/gas-providers/edit/${provider.id}`}
+                class="p-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-colors"
+                title="Edit"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </a>
+              <button
+                class="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors delete-btn"
+                data-id={provider.id}
+                data-name={provider.name}
+                title="Delete"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</AdminLayout>
+
+<script>
+  // Delete handler
+  document.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const target = e.currentTarget as HTMLButtonElement;
+      const id = target.dataset.id;
+      const name = target.dataset.name;
+
+      if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/admin/gas-providers/${id}`, {
+          method: 'DELETE',
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to delete provider. Please try again.');
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        alert('An error occurred. Please try again.');
+      }
+    });
+  });
+</script>
+
+<style>
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+  }
+  .shadow-neon-hover {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+  }
+</style>

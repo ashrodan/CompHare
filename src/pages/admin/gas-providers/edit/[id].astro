@@ -1,0 +1,366 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { requireAuth } from '../../../../utils/auth';
+import { prisma } from '../../../../lib/db';
+
+// Require authentication
+const authRedirect = requireAuth(Astro.cookies);
+if (authRedirect) return authRedirect;
+
+// Get provider ID from URL
+const { id } = Astro.params;
+
+// Fetch provider data
+const provider = await prisma.gasProvider.findUnique({
+  where: { id },
+  include: {
+    summerRates: true,
+    nonSummerRates: true,
+  }
+});
+
+if (!provider) {
+  return Astro.redirect('/admin/gas-providers');
+}
+---
+
+<AdminLayout title="Edit Gas Provider">
+  <!-- Page Header -->
+  <div class="mb-8">
+    <div class="flex items-center gap-4 mb-4">
+      <a
+        href="/admin/gas-providers"
+        class="text-neutral-light hover:text-primary transition-colors"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-white">Edit Gas Provider</h1>
+        <p class="text-neutral-light">Update {provider.name}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <form id="gas-provider-form" class="max-w-4xl" data-provider-id={provider.id}>
+    <!-- Provider Name -->
+    <div class="bg-neutral-dark border border-primary/20 rounded-lg p-6 mb-6 shadow-neon">
+      <h2 class="text-xl font-bold text-white mb-4">Provider Information</h2>
+      <div>
+        <label for="name" class="block text-neutral-light mb-2 text-sm font-medium">
+          Provider Name <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          id="name"
+          name="name"
+          required
+          value={provider.name}
+          class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+        />
+      </div>
+    </div>
+
+    <!-- Summer Rates -->
+    <div class="bg-neutral-dark border border-primary/20 rounded-lg p-6 mb-6 shadow-neon">
+      <h2 class="text-xl font-bold text-white mb-4">Summer Rates</h2>
+
+      <div class="mb-4">
+        <label for="summer-season" class="block text-neutral-light mb-2 text-sm font-medium">
+          Season Label <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          id="summer-season"
+          name="summer-season"
+          required
+          value={provider.summerRates.season}
+          class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="summer-daily-charge" class="block text-neutral-light mb-2 text-sm font-medium">
+          Daily Charge (in cents) <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="number"
+          id="summer-daily-charge"
+          name="summer-daily-charge"
+          required
+          step="0.001"
+          value={provider.summerRates.dailyCharge}
+          class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label for="summer-step1" class="block text-neutral-light mb-2 text-sm font-medium">
+            0-100 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="summer-step1"
+            name="summer-step1"
+            required
+            step="0.001"
+            value={provider.summerRates.step1Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="summer-step2" class="block text-neutral-light mb-2 text-sm font-medium">
+            100-200 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="summer-step2"
+            name="summer-step2"
+            required
+            step="0.001"
+            value={provider.summerRates.step2Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="summer-step3" class="block text-neutral-light mb-2 text-sm font-medium">
+            200-300 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="summer-step3"
+            name="summer-step3"
+            required
+            step="0.001"
+            value={provider.summerRates.step3Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="summer-step4" class="block text-neutral-light mb-2 text-sm font-medium">
+            300-400 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="summer-step4"
+            name="summer-step4"
+            required
+            step="0.001"
+            value={provider.summerRates.step4Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="summer-step5" class="block text-neutral-light mb-2 text-sm font-medium">
+            400+ MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="summer-step5"
+            name="summer-step5"
+            required
+            step="0.001"
+            value={provider.summerRates.step5Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Non-Summer Rates -->
+    <div class="bg-neutral-dark border border-primary/20 rounded-lg p-6 mb-6 shadow-neon">
+      <h2 class="text-xl font-bold text-white mb-4">Non-Summer Rates</h2>
+
+      <div class="mb-4">
+        <label for="non-summer-season" class="block text-neutral-light mb-2 text-sm font-medium">
+          Season Label <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="text"
+          id="non-summer-season"
+          name="non-summer-season"
+          required
+          value={provider.nonSummerRates.season}
+          class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="mb-4">
+        <label for="non-summer-daily-charge" class="block text-neutral-light mb-2 text-sm font-medium">
+          Daily Charge (in cents) <span class="text-red-400">*</span>
+        </label>
+        <input
+          type="number"
+          id="non-summer-daily-charge"
+          name="non-summer-daily-charge"
+          required
+          step="0.001"
+          value={provider.nonSummerRates.dailyCharge}
+          class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+        />
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div>
+          <label for="non-summer-step1" class="block text-neutral-light mb-2 text-sm font-medium">
+            0-100 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="non-summer-step1"
+            name="non-summer-step1"
+            required
+            step="0.001"
+            value={provider.nonSummerRates.step1Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="non-summer-step2" class="block text-neutral-light mb-2 text-sm font-medium">
+            100-200 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="non-summer-step2"
+            name="non-summer-step2"
+            required
+            step="0.001"
+            value={provider.nonSummerRates.step2Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="non-summer-step3" class="block text-neutral-light mb-2 text-sm font-medium">
+            200-300 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="non-summer-step3"
+            name="non-summer-step3"
+            required
+            step="0.001"
+            value={provider.nonSummerRates.step3Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="non-summer-step4" class="block text-neutral-light mb-2 text-sm font-medium">
+            300-400 MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="non-summer-step4"
+            name="non-summer-step4"
+            required
+            step="0.001"
+            value={provider.nonSummerRates.step4Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div>
+          <label for="non-summer-step5" class="block text-neutral-light mb-2 text-sm font-medium">
+            400+ MJ Rate (¢/MJ) <span class="text-red-400">*</span>
+          </label>
+          <input
+            type="number"
+            id="non-summer-step5"
+            name="non-summer-step5"
+            required
+            step="0.001"
+            value={provider.nonSummerRates.step5Rate}
+            class="w-full px-4 py-2 bg-neutral-darker border border-primary/20 rounded-lg text-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex gap-4">
+      <button
+        type="submit"
+        class="bg-primary hover:bg-accent text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-neon hover:shadow-neon-hover"
+      >
+        Update Provider
+      </button>
+      <a
+        href="/admin/gas-providers"
+        class="bg-neutral-dark hover:bg-neutral-darker text-white font-bold py-3 px-8 rounded-lg transition-all border border-primary/20"
+      >
+        Cancel
+      </a>
+    </div>
+  </form>
+
+  <!-- Error Message -->
+  <div id="error-message" class="hidden mt-4 bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg max-w-4xl"></div>
+</AdminLayout>
+
+<script>
+  const form = document.getElementById('gas-provider-form') as HTMLFormElement;
+  const errorMessage = document.getElementById('error-message') as HTMLDivElement;
+  const providerId = form?.dataset.providerId;
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMessage.classList.add('hidden');
+
+    const formData = new FormData(form);
+
+    // Build the data object
+    const data = {
+      name: formData.get('name'),
+      summerRates: {
+        season: formData.get('summer-season'),
+        dailyCharge: formData.get('summer-daily-charge'),
+        step1Rate: formData.get('summer-step1'),
+        step2Rate: formData.get('summer-step2'),
+        step3Rate: formData.get('summer-step3'),
+        step4Rate: formData.get('summer-step4'),
+        step5Rate: formData.get('summer-step5'),
+      },
+      nonSummerRates: {
+        season: formData.get('non-summer-season'),
+        dailyCharge: formData.get('non-summer-daily-charge'),
+        step1Rate: formData.get('non-summer-step1'),
+        step2Rate: formData.get('non-summer-step2'),
+        step3Rate: formData.get('non-summer-step3'),
+        step4Rate: formData.get('non-summer-step4'),
+        step5Rate: formData.get('non-summer-step5'),
+      }
+    };
+
+    try {
+      const response = await fetch(`/api/admin/gas-providers/${providerId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        window.location.href = '/admin/gas-providers';
+      } else {
+        const error = await response.json();
+        errorMessage.textContent = error.error || 'Failed to update provider';
+        errorMessage.classList.remove('hidden');
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      errorMessage.textContent = 'An error occurred. Please try again.';
+      errorMessage.classList.remove('hidden');
+    }
+  });
+</script>
+
+<style>
+  .shadow-neon {
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.1);
+  }
+  .shadow-neon-hover {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.2);
+  }
+</style>

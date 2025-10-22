@@ -1,0 +1,9 @@
+---
+import { destroySession } from '../../utils/auth';
+
+// Destroy session
+destroySession(Astro.cookies);
+
+// Redirect to login
+return Astro.redirect('/admin/login');
+---

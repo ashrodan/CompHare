@@ -1,0 +1,55 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { requireAuth } from '../../../../utils/auth';
+import { prisma } from '../../../../lib/db';
+import OliveOilForm from '../../../../components/OliveOilForm';
+
+const authRedirect = requireAuth(Astro.cookies);
+if (authRedirect) return authRedirect;
+
+const { id } = Astro.params;
+
+const provider = await prisma.oOVOProvider.findUnique({
+  where: { id },
+  include: {
+    volumeOptions: {
+      orderBy: { volume: 'asc' }
+    }
+  }
+});
+
+if (!provider) {
+  return Astro.redirect('/admin/olive-oil');
+}
+---
+
+<AdminLayout title="Edit Olive Oil Provider">
+  <div class="mb-8">
+    <div class="flex items-center gap-4 mb-4">
+      <a href="/admin/olive-oil" class="text-neutral-light hover:text-primary transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-3xl font-bold text-white">Edit Olive Oil Provider</h1>
+        <p class="text-neutral-light">Update {provider.name}</p>
+      </div>
+    </div>
+  </div>
+
+  <OliveOilForm
+    client:load
+    mode="edit"
+    providerId={provider.id}
+    initialData={{
+      name: provider.name,
+      location: provider.location,
+      shipping: provider.shipping,
+      stockStatus: provider.stockStatus,
+      link: provider.link,
+      description: provider.description,
+      volumeOptions: provider.volumeOptions
+    }}
+  />
+</AdminLayout>
